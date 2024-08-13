@@ -13,13 +13,32 @@ public class ChatClient {
             new Thread(new ServerHandler(socket)).start();
 
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             Scanner scanner = new Scanner(System.in);
 
             System.out.print("Enter your username: ");
             String username = scanner.nextLine();
             out.println(username);
 
+            System.out.print("Enter chatroom code: ");
+            String roomcode = scanner.nextLine();
+            out.println(roomcode);
+
+            String chatroomResponse = in.readLine();
+
+            if (chatroomResponse.equals("INVALID ROOM")) {
+                System.out.println("Invalid ChatRoom Code");
+                socket.close();
+                scanner.close();
+                return;
+            }
+
+            System.out.println("");
+            System.out.println("******* Joined chat room " + roomcode + " *******");
+            System.out.println("");
             System.out.println("-----------------" + username + "'s Terminal-----------------");
+
+            new Thread(new ServerHandler(socket)).start();
 
             while (scanner.hasNextLine()) {
                 String message = scanner.nextLine();
@@ -31,15 +50,25 @@ public class ChatClient {
                     out.println("/exit");
                     System.out.println("Exiting the chat");
                     break;                    
+                } else if (message.equalsIgnoreCase("/commands")) {
+                    showcommands();
                 } else {
                     out.println("PUBLIC: " + message);
                 }
             }
 
             scanner.close();
+            socket.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
+    }
+
+    private static void showcommands() {
+        System.out.println("Available Commands: ");
+        System.out.println("1. /msg <username> <msg> ----> Sends a direct message to the mentioned user");
+        System.out.println("2. /commands ----> Show all avaiable commands");
+        System.out.println("3.  /exit ----> Ends the session");
     }
 
     private static class ServerHandler implements Runnable {
@@ -59,7 +88,7 @@ public class ChatClient {
                     System.out.println(message);
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                e.printStackTrace(System.out);
             }
         }
     }
